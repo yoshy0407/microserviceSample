@@ -1,0 +1,50 @@
+version: "3"
+
+services:
+  zookeeper:
+    container_name: ms-zookeeper
+    image: 'bitnami/zookeeper:3'
+    ports:
+      - '2181:2181'
+    volumes:
+      - './zookeeper:/bitnami'
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+  kafka:
+    container_name: ms-kafka
+    image: 'bitnami/kafka:2'
+    ports:
+      - '9092:9092'
+      - '29092:29092'
+    volumes:
+      - './kafka:/bitnami'
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,PLAINTEXT_HOST://:29092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://ms-kafka:9092,PLAINTEXT_HOST://localhost:29092
+    depends_on:
+      - zookeeper
+  kafka-rest:
+    container_name: ms-kafka-rest
+    image: confluentinc/cp-kafka-rest:4.0.0
+    depends_on:
+      - ms-kafka
+    environment:
+      KAFKA_REST_ZOOKEEPER_CONNECT: "ms-zookeeper:2181"
+      KAFKA_REST_HOST_NAME: "ms-kafka-rest"
+      KAFKA_REST_LISTENERS: "http://ms-kafka-rest:8082"
+    ports:
+      - "18082:8082"
+  kafka-topic-ui:
+    container_name: ms-kafka-ui
+    image: landoop/kafka-topics-ui:0.9.3
+    depends_on:
+        - ms-kafka-rest
+    environment:
+      KAFKA_REST_PROXY_URL: "http://ms-kafka-rest:8082"
+      PROXY: "true"
+    ports:
+      - "18000:8000"
+    

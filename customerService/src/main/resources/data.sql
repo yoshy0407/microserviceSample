@@ -1,0 +1,4 @@
+DELETE FROM CUSTOMER;
+INSERT INTO CUSTOMER VALUES(1, '山田 太郎', 'ヤマダ タロウ', '1', 10, '19920407', 'NONE');
+INSERT INTO CUSTOMER VALUES(2, '山田 光宙', 'ヤマダ ピカチュウ',　'1', 10, '20150407', 'NONE');
+INSERT INTO CUSTOMER VALUES(3, '山田 花子', 'ヤマダ ハナコ',　'2', 10, '19800407', 'NONE');
