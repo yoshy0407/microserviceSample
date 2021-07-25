@@ -1,15 +1,10 @@
 package com.microservice.sample.customer;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.microservice.sample.customer.repository.dao.CustomerDao;
-import com.microservice.sample.customer.repository.entity.CustomerEntity;
 
 @RestController
 @RequestMapping("/customer")
@@ -17,9 +12,6 @@ public class TestController {
 
 	@Autowired
 	private KafkaTemplate<String, Object> kafkaTemplate;
-	
-	@Autowired
-	private CustomerDao dao;
 	
 	@GetMapping("validation")
 	public String sendValidation(CustomerValidationDto dto) {
@@ -42,8 +34,4 @@ public class TestController {
 		return "sendMessage to complete";
 	}
 
-	@GetMapping("list")
-	public List<CustomerEntity> getEntity(CustomerEntity entity){
-		return dao.getAll(entity);
-	}
 }

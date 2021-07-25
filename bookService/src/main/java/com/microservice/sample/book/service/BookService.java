@@ -40,16 +40,39 @@ public class BookService {
 		
 		log.info("start reduceStock :" + dto.toString());
 		
+		//重複するトランザクションIDは取り込まない
+		//kafkaは１回はメッセージを送ることを補償するため、取り込み済みのものは処理しない
+		if (!checkTransactionId(dto.getTransactionId())) {
+			log.info("end reduceStock duplicate transactionId " + dto.getTransactionId());
+			return;
+		}
+		
+		//:TODO 処理中でないレコードを取りに行っているが、他で更新中の場合どうする？
+		//今の状態だとレコードなしのエラーとなってしまう。本当であれば、RDBMSと同様にロック待ちにするべき
 		BookEntity entity = getBook(dto.getBookId(), TxStatus.NONE, false);
 		
+		//データが存在しない場合
+		if (entity == null) {
+			//取り込み済みにするためダミーをセット
+			map.put(dto.getTransactionId(), "dummy");
+			String message = messageSource.getMessage("book.notFound", new Object[] {dto.getBookId()}, Locale.getDefault());
+			publishResult(message, false, message);
+			log.error("reduceStock error has occured. message" + message);
+			return;
+		}
+		
+		//取り込み済みにするために一度格納する
+		map.put(dto.getTransactionId(), entity);
+
+		//注文数が在庫数を超えてしまっている
 		if (entity.getBookStock() - dto.getReduceCount() < 0) {
-			String message = messageSource.getMessage("stock.error", null, Locale.getDefault());
+			String message = messageSource.getMessage("stock.error", new Object[] {entity.getBookStock(), dto.getReduceCount()}, Locale.getDefault());
 			publishResult(dto.getTransactionId(), false, message);
 			log.error("reduceStock error has occured. message" + message);
 			return;
 		}
-		map.put(dto.getTransactionId(), entity);
 		
+		//forUpdateでデータを取得しデータを更新
 		BookEntity updateEntity = getBook(entity.getBookId(), TxStatus.NONE, true);
 		
 		updateEntity.setBookStock(updateEntity.getBookStock() - dto.getReduceCount());
@@ -79,6 +102,10 @@ public class BookService {
 		
 		dao.update(entity);
 		log.info("end reduceStock complete");
+	}
+	
+	protected boolean checkTransactionId(String transactionId) {
+		return map.get(transactionId) == null;
 	}
 	
 	private BookEntity getBook(Integer bookId, TxStatus status, boolean lock) {
