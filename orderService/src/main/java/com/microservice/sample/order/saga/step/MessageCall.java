@@ -1,4 +1,4 @@
-package com.microservice.sample.order.service;
+package com.microservice.sample.order.saga.step;
 
 import lombok.Data;
 
