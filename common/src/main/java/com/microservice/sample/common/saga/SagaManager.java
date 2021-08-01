@@ -1,5 +1,6 @@
-package com.microservice.sample.order.saga;
+package com.microservice.sample.common.saga;
 
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -19,7 +20,7 @@ public interface SagaManager {
 	 * @param sagaFunction Sagaを構築する{@link Function}
 	 * @return {@link CompletableFuture}
 	 */
-	public <P> String start(P param, Function<P, Saga<P>> sagaFunction);
+	public <P extends AbstractSagaParam> String start(P param, Function<P, Saga<P>> sagaFunction);
 
 	/**
 	 * 指定されたトランザクションIDに紐づく{@link Saga}を取得します
@@ -27,6 +28,6 @@ public interface SagaManager {
 	 * @param transactionId 取得対象のトランザクションID
 	 * @return {@link CompletableFuture}
 	 */
-	public Saga<?> get(String transactionId);
+	public Optional<Saga<?>> get(String transactionId);
 
 }

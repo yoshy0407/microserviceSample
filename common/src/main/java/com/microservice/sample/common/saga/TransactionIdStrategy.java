@@ -1,4 +1,4 @@
-package com.microservice.sample.order.saga;
+package com.microservice.sample.common.saga;
 
 /**
  * トランザクションIDを採番するStrategyパターンのインタフェースです

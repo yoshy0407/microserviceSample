@@ -1,5 +1,11 @@
-package com.microservice.sample.order.saga.step;
+package com.microservice.sample.common.saga.step;
 
+/**
+ * Sagaのステップの状態を表す列挙型です
+ * 
+ * @author yoshy0407
+ *
+ */
 public enum StepStatus {
 	/**
 	 * サービスが呼び出されていないステータス
