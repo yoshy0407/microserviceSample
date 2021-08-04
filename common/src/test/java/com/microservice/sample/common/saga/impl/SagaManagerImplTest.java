@@ -10,10 +10,10 @@ import org.mockito.Mockito;
 import org.springframework.kafka.requestreply.ReplyingKafkaTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+import com.microservice.sample.common.TransactionIdRegistry;
 import com.microservice.sample.common.saga.AbstractSagaParam;
 import com.microservice.sample.common.saga.Saga;
 import com.microservice.sample.common.saga.SagaBuilder;
-import com.microservice.sample.common.saga.TransactionIdStrategy;
 import com.microservice.sample.common.saga.step.OnReplyStatus;
 
 class SagaManagerImplTest {
@@ -21,13 +21,13 @@ class SagaManagerImplTest {
 	@SuppressWarnings("unchecked")
 	ReplyingKafkaTemplate<String, Object, Object> kafkaTemplate = Mockito.mock(ReplyingKafkaTemplate.class);
 	
-	TransactionIdStrategy strategy = Mockito.mock(TransactionIdStrategy.class);
+	TransactionIdRegistry strategy = Mockito.mock(TransactionIdRegistry.class);
 	
 	SagaManagerImpl sagaManager;
 	
 	@BeforeEach
 	void setup() {
-		Mockito.when(strategy.getNextVal()).thenReturn("00001");
+		Mockito.when(strategy.getNextVal(Mockito.anyString())).thenReturn("00001");
 		
 		ThreadPoolTaskExecutor threadPool = new ThreadPoolTaskExecutor();
 		threadPool.initialize();
@@ -36,7 +36,7 @@ class SagaManagerImplTest {
 	
 	@Test
 	void testNormal() throws InterruptedException {
-		String transactionId = sagaManager.start(new TestSagaParam(), createFunction());
+		String transactionId = sagaManager.start("test", new TestSagaParam(), createFunction());
 		
 		//Sagaが実行中のため、管理されている
 		assertThat(sagaManager.get(transactionId).isPresent()).isTrue();

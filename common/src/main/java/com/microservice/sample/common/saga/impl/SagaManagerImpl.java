@@ -11,10 +11,10 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.concurrent.ListenableFuture;
 
+import com.microservice.sample.common.TransactionIdRegistry;
 import com.microservice.sample.common.saga.AbstractSagaParam;
 import com.microservice.sample.common.saga.Saga;
 import com.microservice.sample.common.saga.SagaManager;
-import com.microservice.sample.common.saga.TransactionIdStrategy;
 
 
 /**
@@ -29,7 +29,7 @@ public class SagaManagerImpl implements SagaManager {
 
 	private ConcurrentHashMap<String, Saga<?>> map = new ConcurrentHashMap<>();
 	
-	private TransactionIdStrategy strategy;
+	private TransactionIdRegistry transactionIdRegistry;
 	
 	private ReplyingKafkaTemplate<String, Object, Object> kafkaTemplate;
 	
@@ -38,14 +38,14 @@ public class SagaManagerImpl implements SagaManager {
 	/**
 	 * インスタンスを生成します
 	 * 
-	 * @param strategy {@link TransactionIdStrategy}
+	 * @param transactionIdRegistry {@link TransactionIdRegistry}
 	 * @param kafkaTemplate {@link ReplyingKafkaTemplate}
 	 * @param threadPool {@link ThreadPoolTaskExecutor}
 	 */
-	public SagaManagerImpl(TransactionIdStrategy strategy, 
+	public SagaManagerImpl(TransactionIdRegistry transactionIdRegistry, 
 			ReplyingKafkaTemplate<String, Object, Object> kafkaTemplate,
 			ThreadPoolTaskExecutor threadPool) {
-		this.strategy = strategy;
+		this.transactionIdRegistry = transactionIdRegistry;
 		this.kafkaTemplate = kafkaTemplate;
 		this.threadPool = threadPool;
 	}
@@ -54,8 +54,8 @@ public class SagaManagerImpl implements SagaManager {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public <P extends AbstractSagaParam> String start(P param, Function<P, Saga<P>> sagaFunction) {
-		String transactionId = strategy.getNextVal();
+	public <P extends AbstractSagaParam> String start(String name, P param, Function<P, Saga<P>> sagaFunction) {
+		String transactionId = transactionIdRegistry.getNextVal(name);
 		Saga<P> saga = sagaFunction.apply(param);
 		saga.setKafkaTemplate(kafkaTemplate);
 		map.put(transactionId, saga);

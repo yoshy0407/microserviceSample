@@ -82,6 +82,7 @@ public abstract class AbstractTablePoolingTransactionMiner<E> {
 							.findFirst();
 					converter.ifPresent(c -> {
 						c.send(kafkaTemplate, e);
+						update(e);
 					});
 				});
 			});
@@ -95,6 +96,12 @@ public abstract class AbstractTablePoolingTransactionMiner<E> {
 	 * @return 検索結果
 	 */
 	protected abstract Optional<List<E>> checkNewData();
+	
+	/**
+	 * 更新します
+	 * @param entity 更新対象のエンティティ
+	 */
+	protected abstract void update(E entity);
 
 	/**
 	 * スリープを実行します
