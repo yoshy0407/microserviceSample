@@ -4,7 +4,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 
 import org.springframework.kafka.requestreply.ReplyingKafkaTemplate;
-import com.microservice.sample.common.event.Event;
+import com.microservice.sample.common.event.AbstractEvent;
 import com.microservice.sample.common.saga.AbstractSagaParam;
 
 /**
@@ -18,7 +18,9 @@ import com.microservice.sample.common.saga.AbstractSagaParam;
  * @param <CE> 完了処理送信時のイベントオブジェクト
  *
  */
-public interface SagaStep<E, P extends AbstractSagaParam, R, RE, CE> {
+public interface SagaStep
+	<E extends AbstractEvent, P extends AbstractSagaParam, 
+	R extends AbstractEvent, RE extends AbstractEvent, CE extends AbstractEvent> {
 	
 	/**
 	 * サービス呼び出しのロジックを登録します
@@ -35,7 +37,7 @@ public interface SagaStep<E, P extends AbstractSagaParam, R, RE, CE> {
 	 * 
 	 * @return このインスタンス
 	 */
-	public SagaStep<E, P, R, RE, CE> receiveReply(String topicName, Function<Event<R>, OnReplyStatus> onReceiveFunction);
+	public SagaStep<E, P, R, RE, CE> receiveReply(String topicName, Function<R, OnReplyStatus> onReceiveFunction);
 	
 	/**
 	 * サービスのロールバック呼び出しロジックを登録します

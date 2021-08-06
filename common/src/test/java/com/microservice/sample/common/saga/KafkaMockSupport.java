@@ -11,7 +11,7 @@ import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 
-import com.microservice.sample.common.event.Event;
+import com.microservice.sample.common.event.AbstractEvent;
 
 /**
  * Kafkaのモックに関するユーティリティです
@@ -39,10 +39,8 @@ public class KafkaMockSupport {
 	 * @param topicName トピック名
 	 * @return {@link Message}
 	 */
-	public static <T> Message<Event<T>> createMessage(T payload, String topicName){
-		Event<T> event = new Event<>();
-		event.setEvent(payload);
-		return MessageBuilder.withPayload(event)
+	public static <T> Message<T> createMessage(T payload, String topicName){
+		return MessageBuilder.withPayload(payload)
 					.setHeader(KafkaHeaders.TOPIC, topicName)
 					.build();
 	}
@@ -55,8 +53,8 @@ public class KafkaMockSupport {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <R> void mockSendAndReceive(ReplyingKafkaTemplate<String, Object, Object> kafkaTemplate, 
-			Message<Event<R>> result) {
-		RequestReplyTypedMessageFuture<String, Object, Event<R>> reply = Mockito.mock(RequestReplyTypedMessageFuture.class);
+			Message<R> result) {
+		RequestReplyTypedMessageFuture<String, Object, R> reply = Mockito.mock(RequestReplyTypedMessageFuture.class);
 		try {
 			Mockito.when(reply.get()).thenReturn(result);
 		} catch (InterruptedException | ExecutionException e) {
@@ -78,10 +76,8 @@ public class KafkaMockSupport {
 	 * @param replyTopic レスポンスを受けるトピック名
 	 * @return {@link Message}
 	 */
-	public static <T> Message<Event<T>> createMessage(T payload, String topicName, String replyTopic){
-		Event<T> event = new Event<>();
-		event.setEvent(payload);
-		return MessageBuilder.withPayload(event)
+	public static <T> Message<T> createMessage(T payload, String topicName, String replyTopic){
+		return MessageBuilder.withPayload(payload)
 					.setHeader(KafkaHeaders.TOPIC, topicName)
 					.setHeader(KafkaHeaders.REPLY_TOPIC, replyTopic)
 					.build();

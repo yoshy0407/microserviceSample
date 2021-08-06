@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.kafka.requestreply.ReplyingKafkaTemplate;
+
+import com.microservice.sample.common.event.AbstractEvent;
 import com.microservice.sample.common.saga.step.OnReplyStatus;
 import com.microservice.sample.common.saga.step.StepStatus;
 
@@ -205,19 +207,19 @@ class SagaTest {
 
 }
 	
-	class TestEvent {
+	class TestEvent extends AbstractEvent {
 		
 	}
 	
-	class TestResult {
+	class TestResult extends AbstractEvent {
 		
 	}
 	
-	class TestCompolete {
+	class TestCompolete extends AbstractEvent {
 		
 	}
 	
-	class TestRollback {
+	class TestRollback extends AbstractEvent {
 		
 	}
 	

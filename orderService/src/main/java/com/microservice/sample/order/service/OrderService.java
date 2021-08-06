@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.microservice.sample.common.saga.SagaManager;
 import com.microservice.sample.order.OrderBook;
 import com.microservice.sample.order.OrderRegisterRequest;
 import com.microservice.sample.order.RestResult;
@@ -18,10 +19,6 @@ import com.microservice.sample.order.repository.dao.BookOrderDao;
 import com.microservice.sample.order.repository.dao.OrderDetailDao;
 import com.microservice.sample.order.repository.entity.BookOrderEntity;
 import com.microservice.sample.order.repository.entity.OrderDetailEntity;
-import com.microservice.sample.order.saga.Saga;
-import com.microservice.sample.order.saga.SagaManager;
-import com.microservice.sample.order.saga.step.MessageCall;
-import com.microservice.sample.order.saga.step.SagaStep;
 import com.microservice.sample.order.service.event.BookStockDto;
 import com.microservice.sample.order.service.event.BookStockResult;
 import com.microservice.sample.order.service.event.CustomerValidationDto;
@@ -40,8 +37,8 @@ public class OrderService {
 	@Autowired
 	protected MessageSource messageSource;
 
-	@Autowired
-	protected SagaManager sagaManager;
+	//@Autowired
+	//protected SagaManager sagaManager;
 
 	public RestResult register(OrderRegisterRequest req){
 		RestResult restResult = new RestResult();
@@ -73,11 +70,11 @@ public class OrderService {
 				return restResult;
 			}
 		}
-		OrderSagaParam param = new OrderSagaParam();
-		param.setCustomerId(req.getCustomerId());
-		param.setOrderBooks(req.getOrderBooks());
+		//OrderSagaParam param = new OrderSagaParam();
+		//param.setCustomerId(req.getCustomerId());
+		//param.setOrderBooks(req.getOrderBooks());
 		
-		startSaga(param, req.getOrderBooks());
+		//startSaga(param, req.getOrderBooks());
 		
 		restResult.setMessage(getMessage("order.success"));
 		restResult.setResult(entity);
@@ -109,7 +106,7 @@ public class OrderService {
 		return orderDetails;
 	}
 
-	protected void startSaga(OrderSagaParam param, List<OrderBook> books) {
+	/**	protected void startSaga(OrderSagaParam param, List<OrderBook> books) {
 		sagaManager.start(param, p -> {
 			Saga<OrderSagaParam> saga = new Saga<>(param);
 			saga.addStep("customer-validation", createCustomer());
@@ -120,12 +117,13 @@ public class OrderService {
 			return saga;
 		});
 	}
+		*/
 
 	private String getMessage(String messageId, Object...args) {
 		return messageSource.getMessage(messageId, args, Locale.getDefault());
 	}
 
-	private SagaStep<OrderSagaParam> createCustomer(){
+/**	private SagaStep<OrderSagaParam> createCustomer(){
 			SagaStep<OrderSagaParam> customerStep = new SagaStep<>();
 			//顧客バリデーションの呼び出しイベントの設定
 			customerStep.setCreateCallEvent(pm -> {
@@ -158,8 +156,9 @@ public class OrderService {
 
 			return customerStep;
 		};
+*/
 
-	private CustomerValidationDto createValidation(OrderSagaParam param) {
+/**	private CustomerValidationDto createValidation(OrderSagaParam param) {
 		CustomerValidationDto dto = new CustomerValidationDto();
 		dto.setTransactionId(param.getTransactionId());
 		dto.setCustomerId(param.getCustomerId());
@@ -169,8 +168,8 @@ public class OrderService {
 		dto.setBookCount(count);
 		return dto;
 	}
-
-	private SagaStep<OrderSagaParam> createBook(OrderBook book, int i){
+*/
+/**	private SagaStep<OrderSagaParam> createBook(OrderBook book, int i){
 		SagaStep<OrderSagaParam> step = new SagaStep<>();
 		//本の在庫サービスの在庫のマイナスを実行を呼び出すロジックを設定
 		step.setCreateCallEvent(p -> {
@@ -202,7 +201,7 @@ public class OrderService {
 		});
 		return step;
 	}
-
+*/
 	private BookStockDto createBookDto(String transactionId, OrderBook book) {
 		BookStockDto dto = new BookStockDto();
 		dto.setTransactionId(transactionId);

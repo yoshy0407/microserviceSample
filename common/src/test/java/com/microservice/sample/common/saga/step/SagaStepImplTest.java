@@ -7,6 +7,8 @@ import java.util.concurrent.ExecutionException;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.kafka.requestreply.ReplyingKafkaTemplate;
+
+import com.microservice.sample.common.event.AbstractEvent;
 import com.microservice.sample.common.saga.AbstractSagaParam;
 import com.microservice.sample.common.saga.KafkaMockSupport;
 
@@ -130,7 +132,7 @@ class SagaStepImplTest {
 	}
 
 	@Data
-	class TestEvent {
+	class TestEvent extends AbstractEvent {
 		
 		private String testField;
 		
@@ -140,15 +142,15 @@ class SagaStepImplTest {
 		
 	}
 	
-	class TestResult {
+	class TestResult extends AbstractEvent {
 		
 	}
 	
-	class TestRollback {
+	class TestRollback extends AbstractEvent {
 		
 	}
 	
-	class TestComplete {
+	class TestComplete extends AbstractEvent {
 		
 	}
 	

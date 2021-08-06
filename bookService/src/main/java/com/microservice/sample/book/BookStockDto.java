@@ -1,11 +1,14 @@
 package com.microservice.sample.book;
 
+import com.microservice.sample.common.event.AbstractEvent;
+
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Data
-public class BookStockDto {
+@EqualsAndHashCode(callSuper = false)
+public class BookStockDto extends AbstractEvent{
 
-	private String transactionId;
 	
 	private Integer bookId;
 	

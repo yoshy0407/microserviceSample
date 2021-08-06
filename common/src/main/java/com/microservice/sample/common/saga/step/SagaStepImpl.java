@@ -12,7 +12,7 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.util.Assert;
 
-import com.microservice.sample.common.event.Event;
+import com.microservice.sample.common.event.AbstractEvent;
 import com.microservice.sample.common.saga.AbstractSagaParam;
 
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +29,9 @@ import lombok.extern.slf4j.Slf4j;
  * @param <CE> 完了処理時に送信するイベント
  */
 @Slf4j
-public class SagaStepImpl<E, P extends AbstractSagaParam, R, RE, CE> 
+public class SagaStepImpl
+	<E extends AbstractEvent, P extends AbstractSagaParam, 
+		R extends AbstractEvent, RE extends AbstractEvent, CE extends AbstractEvent> 
 	implements SagaStep<E, P, R, RE, CE>{
 
 	private StepStatus status = StepStatus.BEFORE_EXECUTE;
@@ -40,7 +42,7 @@ public class SagaStepImpl<E, P extends AbstractSagaParam, R, RE, CE>
 	
 	private Optional<String> receiveTopicName = Optional.empty();
 	
-	private Optional<Function<Event<R>, OnReplyStatus>> onReceiveFunction = Optional.empty();
+	private Optional<Function<R, OnReplyStatus>> onReceiveFunction = Optional.empty();
 	
 	private Optional<TopicMeta<P, RE>> rollbackTopicMeta;
 	
@@ -71,7 +73,7 @@ public class SagaStepImpl<E, P extends AbstractSagaParam, R, RE, CE>
 	 */
 	@Override
 	public SagaStep<E, P, R, RE, CE> receiveReply(String topicName,
-			Function<Event<R>, OnReplyStatus> onReceiveFunction) {
+			Function<R, OnReplyStatus> onReceiveFunction) {
 		Assert.notNull(topicName, "topicName must not be null");
 		Assert.notNull(onReceiveFunction, "onReceiveFunction must not be null");
 		this.receiveTopicName = Optional.ofNullable(topicName);
@@ -122,8 +124,8 @@ public class SagaStepImpl<E, P extends AbstractSagaParam, R, RE, CE>
 	@Override
 	public OnReplyStatus call(ReplyingKafkaTemplate<String, Object, Object> kafkaTemplate, P param) throws InterruptedException, ExecutionException {
 		// 送信する情報を設定
-		Event<E> event = createEvent(callTopicMeta.getEventCreator().apply(param), param);
-		MessageBuilder<Event<E>> messageBuilder = MessageBuilder.withPayload(event)
+		E event = createEvent(callTopicMeta.getEventCreator().apply(param), param);
+		MessageBuilder<E> messageBuilder = MessageBuilder.withPayload(event)
 				.setHeader(KafkaHeaders.TOPIC, callTopicMeta.getTopicName());
 				
 		
@@ -134,9 +136,9 @@ public class SagaStepImpl<E, P extends AbstractSagaParam, R, RE, CE>
 			messageBuilder
 				.setHeader(KafkaHeaders.REPLY_TOPIC, receiveTopicName.get().getBytes());
 			
-			RequestReplyTypedMessageFuture<String, Object, Event<R>> replyFuture = 
+			RequestReplyTypedMessageFuture<String, Object, R> replyFuture = 
 					kafkaTemplate.sendAndReceive(messageBuilder.build(), 
-							new ParameterizedTypeReference<Event<R>>() {});
+							new ParameterizedTypeReference<R>() {});
 			
 			log.info(
 					String.format("step %s send topic for call %s event: %s", 
@@ -145,7 +147,7 @@ public class SagaStepImpl<E, P extends AbstractSagaParam, R, RE, CE>
 			this.status = StepStatus.EXECUTE;
 			
 			//応答した結果を受信し、判定を行う
-			Message<Event<R>> result = replyFuture.get();
+			Message<R> result = replyFuture.get();
 			
 			log.info(
 					String.format("step %s receive result %s event: %s", 
@@ -174,7 +176,7 @@ public class SagaStepImpl<E, P extends AbstractSagaParam, R, RE, CE>
 	public void rollback(ReplyingKafkaTemplate<String, Object, Object> kafkaTemplate, P param) {
 		rollbackTopicMeta.ifPresentOrElse(
 				t -> {
-					Event<RE> event = createEvent(t.getEventCreator().apply(param),param);
+					RE event = createEvent(t.getEventCreator().apply(param),param);
 					String topicName = t.getTopicName();
 					log.info(
 							String.format("step %s send topic for rollback %s event: %s", 
@@ -194,7 +196,7 @@ public class SagaStepImpl<E, P extends AbstractSagaParam, R, RE, CE>
 	public void complete(ReplyingKafkaTemplate<String, Object, Object> kafkaTemplate, P param) {
 		completeTopicMeta.ifPresentOrElse(
 				t -> {
-					Event<CE> event = createEvent(t.getEventCreator().apply(param), param);
+					CE event = createEvent(t.getEventCreator().apply(param), param);
 					String topicName = t.getTopicName();
 					
 					log.info(
@@ -212,16 +214,13 @@ public class SagaStepImpl<E, P extends AbstractSagaParam, R, RE, CE>
 	/**
 	 * イベントをラップします
 	 * 
-	 * @param <T> データとなるイベント
-	 * @param data データとなるイベント
+	 * @param e データとなるイベント
 	 * @param param Saga前提で利用するパラメータ
 	 * @return
 	 */
-	private <T> Event<T> createEvent(T data, P param){
-		Event<T> event = new Event<>();
-		event.setEvent(data);
-		event.setTransactionId(param.getTransactionId());
-		return event;
+	private <T extends AbstractEvent> T createEvent(T e, P param){
+		e.setTransactionId(param.getTransactionId());
+		return e;
 	}
 	
 	/**

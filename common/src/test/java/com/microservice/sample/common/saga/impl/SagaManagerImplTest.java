@@ -11,6 +11,7 @@ import org.springframework.kafka.requestreply.ReplyingKafkaTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import com.microservice.sample.common.TransactionIdRegistry;
+import com.microservice.sample.common.event.AbstractEvent;
 import com.microservice.sample.common.saga.AbstractSagaParam;
 import com.microservice.sample.common.saga.Saga;
 import com.microservice.sample.common.saga.SagaBuilder;
@@ -51,19 +52,19 @@ class SagaManagerImplTest {
 
 	}
 	
-	class TestEvent {
+	class TestEvent extends AbstractEvent{
 		
 	}
 	
-	class TestResult {
+	class TestResult extends AbstractEvent {
 		
 	}
 	
-	class TestCompolete {
+	class TestCompolete extends AbstractEvent {
 		
 	}
 	
-	class TestRollback {
+	class TestRollback extends AbstractEvent {
 		
 	}
 	

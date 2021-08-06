@@ -11,7 +11,7 @@ import org.springframework.validation.annotation.Validated;
 
 import com.microservice.sample.common.TransactionIdRegistry;
 import com.microservice.sample.common.consumer.validation.MessageValidaiton;
-import com.microservice.sample.common.event.Event;
+import com.microservice.sample.common.event.AbstractEvent;
 
 /**
  * Kafkaを利用してメッセージから取り出したイベントを処理して、
@@ -21,7 +21,7 @@ import com.microservice.sample.common.event.Event;
  * @param <E> 受信するイベントオブジェクト
  * @param <RE> 送信するイベントオブジェクト
  */
-public abstract class AbstractReplyConsumer<E, RE> {
+public abstract class AbstractReplyConsumer<E extends AbstractEvent, RE extends AbstractEvent> {
 
 	private final TransactionIdRegistry transactionIdRegistry;
 
@@ -32,24 +32,23 @@ public abstract class AbstractReplyConsumer<E, RE> {
 	/**
 	 * Spring Kafkaから呼び出されてメッセージを処理するメソッドです
 	 * 
-	 * @param event {@link Event}
+	 * @param event {@link AbstractEvent}
 	 * @param metadata {@link ConsumerMetadata}
 	 * @return 返信するメッセージ
 	 */
 	@KafkaHandler(isDefault = true)
 	@SendTo
-	public Message<Event<RE>> consume(@Payload @Validated(value = MessageValidaiton.class) Event<E> event, 
+	public Message<RE> consume(@Payload @Validated(value = MessageValidaiton.class) E event, 
 			ConsumerMetadata metadata) {
 		if (!checkTransactionId(event.getTransactionId(), metadata)) {
 			
-			ReplyTopic<RE> replyTopic = doConsume(event.getEvent(), metadata);
+			ReplyTopic<RE> replyTopic = doConsume(event, metadata);
 			
 			if (replyTopic.getEvent().isPresent()) {
-				Event<RE> resultEvent = new Event<>();
+				RE resultEvent = replyTopic.getEvent().get();
 				resultEvent.setTransactionId(event.getTransactionId());
-				resultEvent.setEvent(replyTopic.getEvent().get());
 				
-				MessageBuilder<Event<RE>> builder = MessageBuilder.withPayload(resultEvent)
+				MessageBuilder<RE> builder = MessageBuilder.withPayload(resultEvent)
 						.setHeader(KafkaHeaders.TOPIC, replyTopic.getTopicName());
 				replyTopic.getMessageKey().ifPresent(key -> {
 					builder.setHeader(KafkaHeaders.MESSAGE_KEY, key);

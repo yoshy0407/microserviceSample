@@ -2,7 +2,7 @@ package com.microservice.sample.common.transaction.converter;
 
 import org.springframework.kafka.core.KafkaTemplate;
 
-import com.microservice.sample.common.event.Event;
+import com.microservice.sample.common.event.AbstractEvent;
 
 /**
  * {@link EventConverter}の抽象クラスです
@@ -11,7 +11,7 @@ import com.microservice.sample.common.event.Event;
  * @param <E> エンティティクラス
  * @param <M> 送信するメッセージのデータオブジェクト
  */
-public abstract class AbstractEventConverter<E, M> implements EventConverter<E>{
+public abstract class AbstractEventConverter<E, M extends AbstractEvent> implements EventConverter<E>{
 
 	/**
 	 * {@inheritDoc}
@@ -19,9 +19,7 @@ public abstract class AbstractEventConverter<E, M> implements EventConverter<E>{
 	@Override
 	public void send(KafkaTemplate<String, Object> kafkaTemplate, E entity) {
 		M mesage = createMessage(entity);
-		Event<M> event = new Event<>();
-		event.setEvent(mesage);
-		kafkaTemplate.send(topicName(), event);
+		kafkaTemplate.send(topicName(), mesage);
 		
 	}
 	

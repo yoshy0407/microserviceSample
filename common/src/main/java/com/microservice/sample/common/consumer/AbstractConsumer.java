@@ -7,7 +7,7 @@ import org.springframework.validation.annotation.Validated;
 
 import com.microservice.sample.common.TransactionIdRegistry;
 import com.microservice.sample.common.consumer.validation.MessageValidaiton;
-import com.microservice.sample.common.event.Event;
+import com.microservice.sample.common.event.AbstractEvent;
 
 /**
  * Kafkaを利用してメッセージから取り出したイベントを処理する抽象クラスです
@@ -15,7 +15,7 @@ import com.microservice.sample.common.event.Event;
  * @param <E> データ部となるイベントオブジェクト
  *
  */
-public abstract class AbstractConsumer<E> {
+public abstract class AbstractConsumer<E extends AbstractEvent> {
 
 	protected final TransactionIdRegistry transactionIdRegistry;
 	
@@ -30,14 +30,14 @@ public abstract class AbstractConsumer<E> {
 	/**
 	 * Spring Kafkaから呼び出されてメッセージを処理するメソッドです
 	 * 
-	 * @param event {@link Event}
+	 * @param event {@link AbstractEvent}
 	 * @param metadata {@link ConsumerMetadata}
 	 */
 	@KafkaHandler(isDefault = true)
-	public void consume(@Payload @Validated(value = MessageValidaiton.class) Event<E> event, 
+	public void consume(@Payload @Validated(value = MessageValidaiton.class) E event, 
 			ConsumerMetadata metadata) {
 		if (!checkTransactionId(event.getTransactionId(), metadata)) {
-			doConsume(event.getEvent(), metadata);
+			doConsume(event, metadata);
 		}
 	}
 	

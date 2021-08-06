@@ -68,6 +68,11 @@
 			<version>2.30.0</version>
 			<scope>provided</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.microservice.sample</groupId>
+			<artifactId>common</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 
 	<build>

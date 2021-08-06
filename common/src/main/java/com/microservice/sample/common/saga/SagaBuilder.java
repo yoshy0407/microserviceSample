@@ -2,6 +2,7 @@ package com.microservice.sample.common.saga;
 
 import java.util.function.Consumer;
 
+import com.microservice.sample.common.event.AbstractEvent;
 import com.microservice.sample.common.saga.step.SagaStep;
 import com.microservice.sample.common.saga.step.SagaStepImpl;
 
@@ -33,7 +34,8 @@ public class SagaBuilder<P extends AbstractSagaParam> {
 	 * @param stepName ステップ名
 	 * @return {@link SagaStep}
 	 */
-	public <E, R, RE, CE> SagaStep<E, P, R, RE, CE> step(String stepName){
+	public <E extends AbstractEvent, R extends AbstractEvent, RE extends AbstractEvent, CE extends AbstractEvent> 
+		SagaStep<E, P, R, RE, CE> step(String stepName){
 		SagaStep<E, P, R, RE, CE> step = new SagaStepImpl<>(stepName);
 		saga.addStep(step);
 		return step;
