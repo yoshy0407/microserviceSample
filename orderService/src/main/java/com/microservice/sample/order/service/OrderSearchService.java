@@ -14,7 +14,8 @@ import org.springframework.util.ReflectionUtils;
 import org.springframework.web.client.RestTemplate;
 
 import com.microservice.sample.common.api.Key;
-import com.microservice.sample.common.api.QueryApiCompositionBuilder;
+import com.microservice.sample.common.api.composition.ApiComposition;
+import com.microservice.sample.common.api.composition.QueryApiComposition;
 import com.microservice.sample.order.URLConstant;
 import com.microservice.sample.order.model.book.BookData;
 import com.microservice.sample.order.model.customer.CustomerData;
@@ -32,48 +33,45 @@ public class OrderSearchService {
 	@Autowired
 	RestTemplate restTemplate;
 	
-	QueryApiCompositionBuilder builder = new QueryApiCompositionBuilder();
+	@Autowired
+	ApiComposition apiComposition;
 	
 	public List<OrderResultDto> selectApiComposition(){
 		List<OrderDto> orders = dao.selectList();
 		
-		return builder.fromTo(orders, OrderResultDto.class)
-			.mapToResult(o -> {
-				OrderResultDto result = new OrderResultDto();
-				result.setOrderId(o.getOrderId());
-				result.setCustomerId(o.getCustomerId());
-				result.setBookId(o.getBookId());
-				result.setOrderAsc(o.getOrderAsc());
-				result.setOrderCount(o.getOrderCount());
-				result.setOrderDate(o.getOrderDate());
-				return result;
-			})
-				.innerJoin(BookData.class, r -> {
-					RequestEntity<BookData> req = 
-							new RequestEntity<>(HttpMethod.GET, uri(URLConstant.BOOK_SERVICE));
-					return restTemplate
-								.exchange(req, new ParameterizedTypeReference<List<BookData>>() {})
-								.getBody();
-				})
-					.on(o -> new Key(o.getBookId()), r -> new Key(r.getBookId()))
-					.mapToEntity((o, b) -> {
-						o.setBookName(b.getBookName());
-					})
-			.and()
-				.innerJoin(CustomerData.class, r -> {
-					RequestEntity<CustomerData> req = 
-							new RequestEntity<>(HttpMethod.GET, uri(URLConstant.CUSTOMER_SERVICE));
-					return restTemplate
-								.exchange(req, new ParameterizedTypeReference<List<CustomerData>>() {})
-								.getBody();
-				})
-					.on(o -> new Key(o.getCustomerId()), r -> new Key(r.getCustomerId()))
-					.mapToEntity((o, c) -> {
-						o.setCustomerName(c.getCustomerName());
-						o.setCustomerNameKana(c.getCustomerNameKana());
-					})
-			.and()
-				.execute();
+		return apiComposition
+				.execute(
+						OrderDto.class, 
+						OrderResultDto.class,
+						builder -> {
+							builder
+								.select(OrderResultDto.class)
+								.from(orders)
+								.innerJoin(BookData.class, r -> {
+									RequestEntity<BookData> req = 
+											new RequestEntity<>(HttpMethod.GET, uri(URLConstant.BOOK_SERVICE));
+									return restTemplate
+												.exchange(req, new ParameterizedTypeReference<List<BookData>>() {})
+												.getBody();
+								})
+									.onEqual(o -> new Key(o.getBookId()), r -> new Key(r.getBookId()))
+									.mapToEntity((o, b) -> {
+										o.setBookName(b.getBookName());
+									})
+							.and()
+								.innerJoin(CustomerData.class, r -> {
+									RequestEntity<CustomerData> req = 
+											new RequestEntity<>(HttpMethod.GET, uri(URLConstant.CUSTOMER_SERVICE));
+									return restTemplate
+												.exchange(req, new ParameterizedTypeReference<List<CustomerData>>() {})
+												.getBody();
+								})
+									.onEqual(o -> new Key(o.getCustomerId()), r -> new Key(r.getCustomerId()))
+									.mapToEntity((o, c) -> {
+										o.setCustomerName(c.getCustomerName());
+										o.setCustomerNameKana(c.getCustomerNameKana());
+									});
+						});				
 	}
 	
 	private URI uri(String uri) {

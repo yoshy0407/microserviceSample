@@ -7,11 +7,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.util.Assert;
-import org.springframework.web.client.RestTemplate;
 
 import com.microservice.sample.common.api.Key;
 import com.microservice.sample.common.api.spi.JoinApiCaller;
-import com.microservice.sample.common.api.spi.QueryApiComposition;
+import com.microservice.sample.common.api.spi.QueryApiCompositionBuilder;
 
 /**
  * {@link JoinApiCaller}の抽象クラス
@@ -23,9 +22,7 @@ import com.microservice.sample.common.api.spi.QueryApiComposition;
  */
 public abstract class AbstractJoinApiCaller<BE, R, RE> implements JoinApiCaller<BE, R, RE>{
 
-	private Class<R> response;
-	
-	private Function<List<RE>, List<R>> apiCall;
+	private Function<List<BE>, List<R>> apiCall;
 	
 	private Function<RE, Key> resultFunction;
 	
@@ -33,7 +30,9 @@ public abstract class AbstractJoinApiCaller<BE, R, RE> implements JoinApiCaller<
 	
 	private BiConsumer<RE, R> mapToEntity;
 	
-	private QueryApiComposition<BE, RE> parent;
+	private List<R> responseList;
+	
+	private QueryApiCompositionBuilder<BE, RE> parent;
 	
 	/**
 	 * コンストラクタ
@@ -42,9 +41,8 @@ public abstract class AbstractJoinApiCaller<BE, R, RE> implements JoinApiCaller<
 	 * @param apiCall URIを解決する{link {@link Function}
 	 * @param parent 親のインスタンス
 	 */
-	public AbstractJoinApiCaller(Class<R> response, Function<List<RE>, List<R>> apiCall, 
-			QueryApiComposition<BE, RE> parent) {
-		this.response = response;
+	public AbstractJoinApiCaller(Class<R> response, Function<List<BE>, List<R>> apiCall, 
+			QueryApiCompositionBuilder<BE, RE> parent) {
 		this.apiCall = apiCall;
 		this.parent = parent;
 	}
@@ -53,7 +51,7 @@ public abstract class AbstractJoinApiCaller<BE, R, RE> implements JoinApiCaller<
 	 * {@inheritDoc}
 	 */
 	@Override
-	public JoinApiCaller<BE, R, RE> on(Function<RE, Key> resultFunction, Function<R, Key> responseFunction) {
+	public JoinApiCaller<BE, R, RE> onEqual(Function<RE, Key> resultFunction, Function<R, Key> responseFunction) {
 		this.resultFunction = resultFunction;
 		this.responseFunction = responseFunction;
 		return this;
@@ -72,7 +70,7 @@ public abstract class AbstractJoinApiCaller<BE, R, RE> implements JoinApiCaller<
 	 * {@inheritDoc}
 	 */
 	@Override
-	public QueryApiComposition<BE, RE> and() {
+	public QueryApiCompositionBuilder<BE, RE> and() {
 		return parent;
 	}
 
@@ -87,37 +85,43 @@ public abstract class AbstractJoinApiCaller<BE, R, RE> implements JoinApiCaller<
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * APIを呼び出します
+	 * @param baseEntities ベースとなるエンティティのリスト
+	 * @return APIの呼び出し結果
 	 */
-	@Override
-	public void execute(List<RE> resultList) {
-		Map<Key, R> responseMap = get(resultList);
-		
+	public List<R> call(List<BE> baseEntities) {
+		this.responseList = apiCall.apply(baseEntities);
+		return this.responseList;
+	}
+	
+	/**
+	 * レスポンスから結合エンティティにマッピングします
+	 * 
+	 * @param resultEntities 結合エンティティ
+	 */
+	public void mapToResult(List<RE> resultEntities) {
+		Map<Key, R> responseMap = responseList.stream()
+				.collect(Collectors.toMap(r -> responseFunction.apply(r), r -> r));
+
 		int i = 0;
-		for (RE re : resultList) {
+		for (RE re : resultEntities) {
 			Key key = getResultEntityKey(re);
 			R response = responseMap.get(key);
 			
 			if (response == null) {
-				doResponseNull(resultList, i);
+				doResponseNull(resultEntities, i);
 			} else {
 				mapToEntity.accept(re, response);
 			}
 			i++;
-		}		
+		}
 	}
 	
 	protected abstract void doResponseNull(List<RE> resultList, int index);
 	
-	protected Map<Key, R> get(List<RE> list){
-		List<R> responses = apiCall.apply(list);
-		return responses.stream()
-					.collect(Collectors.toMap(r -> responseFunction.apply(r), r -> r));
-	}
 	
 	protected Key getResultEntityKey(RE entity) {
 		return resultFunction.apply(entity);
 	}
-	
 	
 }

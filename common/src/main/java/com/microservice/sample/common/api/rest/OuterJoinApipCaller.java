@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.function.Function;
 
 import com.microservice.sample.common.api.spi.JoinApiCaller;
-import com.microservice.sample.common.api.spi.QueryApiComposition;
+import com.microservice.sample.common.api.spi.QueryApiCompositionBuilder;
 
 /**
  * OUTER JOINを行う{@link JoinApiCaller}です
@@ -23,8 +23,8 @@ public class OuterJoinApipCaller<BE, R, RE> extends AbstractJoinApiCaller<BE, R,
 	 * @param apiCall URIを解決する{@link Function}
 	 * @param parent 親のインスタンス
 	 */
-	public OuterJoinApipCaller(Class<R> response, Function<List<RE>, List<R>> apiCall, 
-			QueryApiComposition<BE, RE> parent) {
+	public OuterJoinApipCaller(Class<R> response, Function<List<BE>, List<R>> apiCall, 
+			QueryApiCompositionBuilder<BE, RE> parent) {
 		super(response, apiCall, parent);
 	}
 

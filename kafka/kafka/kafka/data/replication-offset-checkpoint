@@ -45,14 +45,14 @@ book-stock-result 0 10
 __consumer_offsets 22 0
 __consumer_offsets 46 0
 __consumer_offsets 23 0
-__consumer_offsets 42 113
+__consumer_offsets 42 115
 book-stock 0 18
 __consumer_offsets 28 0
 customer-validation-rollback 0 2
 __consumer_offsets 4 0
 book-stock-rollback 0 1
 __consumer_offsets 31 0
-__consumer_offsets 5 80
+__consumer_offsets 5 82
 __consumer_offsets 1 0
 __consumer_offsets 15 0
 __consumer_offsets 38 0

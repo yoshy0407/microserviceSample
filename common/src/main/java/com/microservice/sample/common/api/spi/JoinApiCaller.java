@@ -1,6 +1,5 @@
 package com.microservice.sample.common.api.spi;
 
-import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -23,7 +22,7 @@ public interface JoinApiCaller<BE, R, RE> {
 	 * @param responseFunction レスポンスから結合キーを取り出す{@link Function}
 	 * @return {@link JoinApiCaller}
 	 */
-	public JoinApiCaller<BE, R, RE> on(Function<RE, Key> resultFunction, Function<R, Key> responseFunction);
+	public JoinApiCaller<BE, R, RE> onEqual(Function<RE, Key> resultFunction, Function<R, Key> responseFunction);
 	
 	/**
 	 * 条件に一致したレスポンスからエンティティにデータをコピーします
@@ -35,18 +34,13 @@ public interface JoinApiCaller<BE, R, RE> {
 	
 	/**
 	 * ANDで次の処理を記述するためのインスタンスを返却します
-	 * @return {@link QueryApiComposition}
+	 * @return {@link QueryApiCompositionBuilder}
 	 */
-	public QueryApiComposition<BE, RE> and();
+	public QueryApiCompositionBuilder<BE, RE> and();
 	
 	/**
 	 * インスタンスのチェックを実行します
 	 */
 	public void validate();
 	
-	/**
-	 * 処理を実行します
-	 * @param resultList ベース情報がコピーされた結合エンティティ
-	 */
-	public void execute(List<RE> resultList);
 }
